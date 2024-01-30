@@ -7,7 +7,7 @@
         <title>uploader</title>
         @vite('resources/css/app.css')
     </head>
-    <body>
+    <body class="bg-dark">
         <div id="app"></div>
         @vite('resources/js/app.js')
     </body>

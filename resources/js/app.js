@@ -1,4 +1,7 @@
 import './bootstrap';
+import 'bootstrap/dist/js/bootstrap.bundle'
+import 'bootstrap/dist/css/bootstrap.min.css'
+
 
 import { createApp } from 'vue';
 
@@ -7,10 +10,9 @@ import VueAxios from 'vue-axios';
 
 const app = createApp(App);
 
+// app.use(VueAxios);
+
 app.mount('#app');
-app.use(axios,VueAxios);
-
-
 
 
 

@@ -1,7 +1,9 @@
 <script setup>
-
+import UploadComponent from './UploadComponent.vue'
 </script>
 
 <template>
-    <div>uploader</div>
+    <div class="container">
+        <UploadComponent />
+    </div>
 </template>
