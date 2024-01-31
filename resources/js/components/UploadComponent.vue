@@ -1,10 +1,12 @@
 <script setup>
-import { ref } from "vue";
+import { ref, watch } from "vue";
 const step = ref(1);
 const file = ref();
 const formatError = ref(false);
 const stop = ref(false);
 const selectedFileIndex = ref(null);
+
+
 async function select(event) {
     file.value = event.target.files[0];
     await checkFileTypes();
@@ -35,14 +37,28 @@ function createChunks() {
                 )
             );
         }
-        step.value = 2
+        // step.value = 2
     }
     selectedFileIndex.value = 0
 }
+
+function upload(key){
+
+    if(chunks.value[key] != undefined && stop.value == false){
+        const url = 'http://127.0.0.1/upload'
+        const formData = new formData();
+        formData.append('latest',(key == chunks.value.length - 1).toString())
+        // formData.append('sliceFile',chunks.value[key])
+    }
+}
+
+watch(selectedFileIndex,()=>{
+    upload(selectedFileIndex.value)
+});
 </script>
 
 <template>
-    <div v-if="step.value == 1">
+    <div v-if="step == 1">
         <div
             class="upload-box bg-white rounded cursor-pointer text-center shadow mx-auto w-50 mt-150 p-5"
         >
