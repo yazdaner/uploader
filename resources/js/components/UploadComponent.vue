@@ -1,11 +1,13 @@
 <script setup>
 import { ref, watch } from "vue";
+import axios from "axios";
+
 const step = ref(1);
 const file = ref();
 const formatError = ref(false);
 const stop = ref(false);
 const selectedFileIndex = ref(null);
-
+const uploadedSize = ref(0);
 
 async function select(event) {
     file.value = event.target.files[0];
@@ -37,23 +39,55 @@ function createChunks() {
                 )
             );
         }
-        // step.value = 2
+        step.value = 2;
     }
-    selectedFileIndex.value = 0
+    selectedFileIndex.value = 0;
 }
 
-function upload(key){
-
-    if(chunks.value[key] != undefined && stop.value == false){
-        const url = 'http://127.0.0.1/upload'
-        const formData = new formData();
-        formData.append('latest',(key == chunks.value.length - 1).toString())
-        // formData.append('sliceFile',chunks.value[key])
+function upload(key) {
+    if (chunks.value[key] != undefined && stop.value == false) {
+        const url = "http://127.0.0.1:8000/upload";
+        const formData = new FormData();
+        formData.set("latest", (key == chunks.value.length - 1).toString());
+        formData.set("sliceFile", chunks.value[key], `${file.value.name}.part`);
+        formData.set("part", key);
+        axios
+            .post(url, formData)
+            .then((response) => {
+                console.log(response);
+                changeProcessDetail()
+                selectedFileIndex.value++;
+            })
+            .catch((error) => {
+                console.log(error);
+            });
     }
 }
 
-watch(selectedFileIndex,()=>{
-    upload(selectedFileIndex.value)
+function changeProcessDetail() {
+    const w = (uploadedSize.value / file.value.size) * 100;
+    document.querySelector('.progress-bar').style.width = w+'%';
+    if(selectedFileIndex.value == chunks.value.length - 1){
+        uploadedSize.value = file.value.size
+    }
+    else{
+        uploadedSize.value = selectedFileIndex.value * 500000
+    }
+}
+function convertFileSize(size) {
+    if (size > 1000000000) {
+        return (size / 1000000000).toFixed(2) + "GB";
+    } else if (size > 1000000) {
+        return (size / 1000000).toFixed(2) + "MB";
+    } else if (size > 1000) {
+        return (size / 1000).toFixed(2) + "KB";
+    } else {
+        return (size / 1000).toFixed(2) + "B";
+    }
+}
+
+watch(selectedFileIndex, () => {
+    upload(selectedFileIndex.value);
 });
 </script>
 
@@ -85,5 +119,20 @@ watch(selectedFileIndex,()=>{
             </p>
         </div>
     </div>
-    <div v-else>step 2</div>
+    <div v-else>
+        <div
+            class="upload-box bg-white rounded cursor-pointer text-center shadow mx-auto w-50 mt-150 p-5"
+        >
+            <div
+                class="progress"
+                role="progressbar"
+                aria-label="Example with label"
+                aria-valuenow="25"
+                aria-valuemin="0"
+                aria-valuemax="100"
+            >
+                <div class="progress-bar" style="width: 25%">25%</div>
+            </div>
+        </div>
+    </div>
 </template>
