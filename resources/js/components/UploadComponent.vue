@@ -1,11 +1,13 @@
 <script setup>
-import { ref, watch } from "vue";
+import { onMounted, ref, watch } from "vue";
 import axios from "axios";
 
 const step = ref(1);
 const file = ref();
 const formatError = ref(false);
 const serverError = ref(false);
+const networkError = ref(false);
+const network = ref('online');
 const stop = ref(false);
 const selectedFileIndex = ref(null);
 const uploadedSize = ref(0);
@@ -46,8 +48,13 @@ function createChunks() {
 }
 
 function upload(key) {
-    if (chunks.value[key] != undefined && stop.value == false) {
-        serverError.value= false;
+    if (
+        chunks.value[key] != undefined &&
+        stop.value == false &&
+        networkError.value == false &&
+        network.value == "online"
+    ) {
+        serverError.value = false;
         const url = "http://127.0.0.1:8000/upload";
         const formData = new FormData();
         formData.set("latest", (key == chunks.value.length - 1).toString());
@@ -61,9 +68,9 @@ function upload(key) {
                 changeProcessDetail();
             })
             .catch((error) => {
-                stop.value = true
-                serverError.value = true
-                console.log(error)
+                stop.value = true;
+                serverError.value = true;
+                console.log(error);
             });
     }
 }
@@ -99,10 +106,42 @@ watch(stop, (newValue, oldValue) => {
         upload(selectedFileIndex.value);
     }
 });
+
+watch(network, (newValue, oldValue) => {
+    if ((oldValue == 'offline', newValue == 'online')) {
+        upload(selectedFileIndex.value);
+    }
+});
+
+function checkNetwork() {
+    setInterval(function () {
+        if (file.value != null) {
+            if (navigator.onLine) {
+                network.value = "online";
+                networkError.value = false;
+            } else {
+                network.value = "offline";
+                networkError.value = true;
+            }
+        }
+    }, 500);
+}
+
+onMounted(() => {
+    checkNetwork();
+});
+
+async function onDrag(e){
+    console.log(2);
+    file.value = e.dataTransfer.files[0]
+    await checkFileTypes();
+    createChunks();
+}
+
 </script>
 
 <template>
-    <div v-if="step == 1">
+    <div v-if="step == 1" @drag.prevent="onDrag" @dragover.prevent>
         <div
             class="upload-box bg-white rounded cursor-pointer text-center shadow mx-auto w-50 mt-150 p-5"
         >
@@ -146,7 +185,7 @@ watch(stop, (newValue, oldValue) => {
                 <span class="">{{ convertFileSize(uploadedSize) }}</span>
             </div>
             <div class="mt-4">
-                <div v-if="uploadedSize != file.size">
+                <div v-if="uploadedSize != file.size && networkError == false">
                     <button
                         v-if="stop == false"
                         @click="stop = true"
@@ -162,11 +201,14 @@ watch(stop, (newValue, oldValue) => {
                         start
                     </button>
                 </div>
-                <div v-else class="text-success">
+                <div v-if="uploadedSize == file.size" class="text-success">
                     <strong>file uploaded</strong>
                 </div>
                 <p class="mt-3 text-danger" v-if="serverError">
                     Server has error
+                </p>
+                <p class="mt-3 text-danger" v-if="networkError">
+                    Network has error
                 </p>
             </div>
         </div>
