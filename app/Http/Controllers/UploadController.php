@@ -16,7 +16,17 @@ class UploadController extends Controller
         $types = ["mp4", "mov", "wvm", "flv", "avi", "mkv"];
         $ex = explode('.', $name);
         if (sizeof($ex) > 0 && array_search($ex[sizeof($ex) - 1], $types) == 0) {
-            File::append($path, $sliceFile->get());
+            $part = $request->get('part');
+            $append = true;
+            if ($part > 1) {
+                $oldFileSize = filesize($path);
+                if ($oldFileSize > $part * 500000) {
+                    $append = false;
+                }
+            }
+            if ($append) {
+                File::append($path, $sliceFile->get());
+            }
             if ($request->get('latest') == 'true') {
                 File::move($path, "./videos/{$name}");
                 return ['status' => 'ok'];

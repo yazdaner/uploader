@@ -5,10 +5,12 @@ import axios from "axios";
 const step = ref(1);
 const file = ref();
 const formatError = ref(false);
+const serverError = ref(false);
 const stop = ref(false);
 const selectedFileIndex = ref(null);
 const uploadedSize = ref(0);
-let size = 200000;
+const chunks = ref([]);
+let size = 500000;
 
 async function select(event) {
     file.value = event.target.files[0];
@@ -26,7 +28,6 @@ function checkFileTypes() {
     }
     error ? (formatError.value = true) : (formatError.value = false);
 }
-const chunks = ref([]);
 function createChunks() {
     if (formatError.value == false) {
         let chunksLength = Math.ceil(file.value.size / size);
@@ -46,6 +47,7 @@ function createChunks() {
 
 function upload(key) {
     if (chunks.value[key] != undefined && stop.value == false) {
+        serverError.value= false;
         const url = "http://127.0.0.1:8000/upload";
         const formData = new FormData();
         formData.set("latest", (key == chunks.value.length - 1).toString());
@@ -59,7 +61,9 @@ function upload(key) {
                 changeProcessDetail();
             })
             .catch((error) => {
-                console.log(error);
+                stop.value = true
+                serverError.value = true
+                console.log(error)
             });
     }
 }
@@ -160,8 +164,10 @@ watch(stop, (newValue, oldValue) => {
                 </div>
                 <div v-else class="text-success">
                     <strong>file uploaded</strong>
-                    <div></div>
                 </div>
+                <p class="mt-3 text-danger" v-if="serverError">
+                    Server has error
+                </p>
             </div>
         </div>
     </div>
