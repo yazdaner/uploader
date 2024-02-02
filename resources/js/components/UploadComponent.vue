@@ -132,7 +132,6 @@ onMounted(() => {
 });
 
 async function onDrag(e){
-    console.log(2);
     file.value = e.dataTransfer.files[0]
     await checkFileTypes();
     createChunks();
@@ -141,7 +140,7 @@ async function onDrag(e){
 </script>
 
 <template>
-    <div v-if="step == 1" @drag.prevent="onDrag" @dragover.prevent>
+    <div v-if="step == 1" @drop.prevent="onDrag" @dragover.prevent>
         <div
             class="upload-box bg-white rounded cursor-pointer text-center shadow mx-auto w-50 mt-150 p-5"
         >
