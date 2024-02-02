@@ -8,6 +8,7 @@ const formatError = ref(false);
 const stop = ref(false);
 const selectedFileIndex = ref(null);
 const uploadedSize = ref(0);
+let size = 200000;
 
 async function select(event) {
     file.value = event.target.files[0];
@@ -28,7 +29,6 @@ function checkFileTypes() {
 const chunks = ref([]);
 function createChunks() {
     if (formatError.value == false) {
-        let size = 500000;
         let chunksLength = Math.ceil(file.value.size / size);
         for (let i = 0; i < chunksLength; i++) {
             chunks.value.push(
@@ -55,8 +55,8 @@ function upload(key) {
             .post(url, formData)
             .then((response) => {
                 console.log(response);
-                changeProcessDetail()
                 selectedFileIndex.value++;
+                changeProcessDetail();
             })
             .catch((error) => {
                 console.log(error);
@@ -66,12 +66,12 @@ function upload(key) {
 
 function changeProcessDetail() {
     const w = (uploadedSize.value / file.value.size) * 100;
-    document.querySelector('.progress-bar').style.width = w+'%';
-    if(selectedFileIndex.value == chunks.value.length - 1){
-        uploadedSize.value = file.value.size
-    }
-    else{
-        uploadedSize.value = selectedFileIndex.value * 500000
+    document.querySelector(".progress-bar").style.width = w + "%";
+    document.querySelector(".progress-bar").innerHTML = Math.round(w) + "%";
+    if (selectedFileIndex.value < chunks.value.length - 1) {
+        uploadedSize.value = selectedFileIndex.value * size;
+    } else {
+        uploadedSize.value = file.value.size;
     }
 }
 function convertFileSize(size) {
@@ -88,6 +88,12 @@ function convertFileSize(size) {
 
 watch(selectedFileIndex, () => {
     upload(selectedFileIndex.value);
+});
+
+watch(stop, (newValue, oldValue) => {
+    if ((oldValue == true, newValue == false)) {
+        upload(selectedFileIndex.value);
+    }
 });
 </script>
 
@@ -123,16 +129,45 @@ watch(selectedFileIndex, () => {
         <div
             class="upload-box bg-white rounded cursor-pointer text-center shadow mx-auto w-50 mt-150 p-5"
         >
-            <div
-                class="progress"
-                role="progressbar"
-                aria-label="Example with label"
-                aria-valuenow="25"
-                aria-valuemin="0"
-                aria-valuemax="100"
-            >
-                <div class="progress-bar" style="width: 25%">25%</div>
+            <div class="">
+                <div
+                    class="progress mb-4"
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                >
+                    <div class="progress-bar animation"></div>
+                </div>
+                <span class="">{{ convertFileSize(file.size) }}</span>
+                -
+                <span class="">{{ convertFileSize(uploadedSize) }}</span>
+            </div>
+            <div class="mt-4">
+                <div v-if="uploadedSize != file.size">
+                    <button
+                        v-if="stop == false"
+                        @click="stop = true"
+                        class="btn btn-danger"
+                    >
+                        stop
+                    </button>
+                    <button
+                        v-if="stop == true"
+                        @click="stop = false"
+                        class="btn btn-success"
+                    >
+                        start
+                    </button>
+                </div>
+                <div v-else class="text-success">
+                    <strong>file uploaded</strong>
+                    <div></div>
+                </div>
             </div>
         </div>
     </div>
 </template>
+<style>
+.animation {
+    transition: width 0.5s;
+}
+</style>
