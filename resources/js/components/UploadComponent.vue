@@ -12,7 +12,7 @@ const stop = ref(false);
 const selectedFileIndex = ref(null);
 const uploadedSize = ref(0);
 const chunks = ref([]);
-let size = 500000;
+let size = 1000000;
 
 async function select(event) {
     file.value = event.target.files[0];
